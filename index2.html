@@ -1,0 +1,151 @@
+$cd=$env:temp; cd $cd; [Environment]::CurrentDirectory = $cd
+$host.UI.RawUI.WindowSize = New-Object Management.Automation.Host.Size ($host.UI.RawUI.WindowSize.Width, 12)
+######################################################
+function Get-BrowserPath {
+    param (
+        [string]$exeName
+    )
+
+    try {
+        # 设置注册表路径（包括 32 位路径）
+        $regPaths = @(
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\$exeName",
+            "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\$exeName"
+        )
+
+        # 遍历注册表路径
+        foreach ($regPath in $regPaths) {
+            if (Test-Path $regPath) {
+                $exePath = (Get-ItemProperty -Path $regPath)."(default)"
+                if ($exePath) {
+                    return $exePath
+                }
+            }
+        }
+
+        # 如果都没有找到路径，返回空字符串
+        return ""
+    }
+    catch {
+        return ""
+    }
+}
+
+# 下载文件函数
+function Download-File {
+    param (
+        [string]$urlDown,
+        [string]$FileName
+    )
+
+    # 定义下载路径和临时文件名
+    $downloadPath = Join-Path -Path $env:temp -ChildPath "$($FileName.TrimEnd('.exe')).ex"
+    $finalPath = Join-Path -Path $env:temp -ChildPath $FileName
+
+    # 检查文件是否已经下载过
+    if (Test-Path $finalPath) {
+        # 只输出文件路径
+        return $finalPath
+    }
+
+    # 下载文件
+    try {
+        $webClient = New-Object Net.WebClient
+        $webClient.DownloadFile($urlDown, $downloadPath)
+        
+        # 重命名文件
+        Rename-Item -Path $downloadPath -NewName $FileName
+        return $finalPath
+    } catch {
+        Write-Error "Error downloading file: $_"
+        return $null
+    }
+}
+######################################################
+# 检查是否安装 Google Chrome
+$chromePath = Get-BrowserPath -exeName "chrome.exe"
+if ($chromePath) {
+    $_s = $chromePath
+} else {
+	$host.UI.RawUI.WindowTitle = "正在下载并安装Chrome, 请稍等..."
+	
+    # 下载并安装 Chrome 浏览器
+    $chromeInstallerPath = Download-File -urlDown "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -FileName "ChromeSetup.exe"    
+    if ($chromeInstallerPath) {
+        Start-Process -FilePath $chromeInstallerPath -ArgumentList '/silent /install' -NoNewWindow -Wait
+        Remove-Item -Path $chromeInstallerPath
+        $_s = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+    }
+}
+###################################################### 获取工具软件路径
+function getToolPath
+{
+	param (
+		[string]$filePath,
+		[string]$urlDown,
+		[string]$fileMD5
+	)
+	
+	$shouldDownload = $true;
+	
+	# 如果文件存在，先检查 MD5 值
+	if (Test-Path $filePath)
+	{
+		$computedMD5 = (Get-FileHash $filePath -Algorithm MD5).Hash
+		if ($computedMD5 -eq $fileMD5)
+		{
+			$shouldDownload = $false # 无需下载
+		}
+	}
+	
+	# 如果文件不存在或 MD5 校验失败，则下载文件
+	if ($shouldDownload)
+	{
+		# 检查文件所在目录是否存在，如果不存在则先创建
+		$directory = [System.IO.Path]::GetDirectoryName($filePath)
+		if (-Not (Test-Path $directory)) { New-Item -Path $directory -ItemType Directory > $Null }
+		
+		(New-Object Net.WebClient).DownloadFile($urlDown, $filePath) #下载文件
+		
+		# 下载完成后再次检查 MD5 值
+		$computedMD5 = (Get-FileHash $filePath -Algorithm MD5).Hash
+		if ($computedMD5 -ne $fileMD5) { Throw }
+	}
+	
+	# 执行解压
+	if ($filePath -match '\.zip$')
+	{
+		$outputDirectory = [System.IO.Path]::GetDirectoryName($filePath)
+		Expand-Archive -Path $filePath -DestinationPath $outputDirectory -Force
+		del $filePath -for
+		$filePath = $filePath -replace '\.zip$', '.exe'
+	}
+	return $filePath
+}
+
+$one = "http://www.jyhmedia.com/OneManager/bbwbxyz"
+getToolPath -filePath $cd\hysteria.exe -urlDown "$one/SOFT/WIN/Proxy/hysteria.exe" -fileMD5 '75B0803FF7DB5CC16A0E4178FC8AEA07'
+
+@"
+block domain activation.winautomation.com
+
+block domain thinkautomation.com
+block domain api.thinkautomation.com
+
+block domain www.sapien.com
+block domain api.sapien.com
+
+direct domain localhost
+direct cidr 127.0.0.0/8
+"@ | Set-Content -Path "Acl.txt"
+
+# 下载 JSON 文件并存储为对象
+$config = Invoke-RestMethod -Uri "https://gitlab.com/free9999/ipupdate/-/raw/master/backup/img/1/2/ip/hysteria/3/config.json"
+# 添加新的键值对 "acl" : "acl.txt"
+$config | Add-Member -MemberType NoteProperty -Name "acl" -Value "Acl.txt"
+# 将更新后的对象转换为 JSON 格式并保存到 config.json
+$config | ConvertTo-Json -Depth 10 | Set-Content -Path "config.json"
+
+& $_s --no-first-run --proxy-server="socks5://127.0.0.1:1080" "https://chatgpt.com/"
+$host.UI.RawUI.WindowTitle = "hysteria开ChatGPT"
+& $cd\hysteria.exe
