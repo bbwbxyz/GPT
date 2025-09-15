@@ -18,6 +18,7 @@ if ($NetID) {
     } else {
         Write-Output "IPv4 配置中使用固定IP"
     }
+    chcp 936 > $null
 } else {
     Write-Host "未找到有效互联网连接"
 }
