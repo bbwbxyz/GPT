@@ -5,9 +5,10 @@ $host.UI.RawUI.WindowSize = New-Object Management.Automation.Host.Size ($host.UI
 function Check-WebsiteStatus {
     param (
         [string]$Url = "http://www.baidu.com",
-        [int]$MaxRetries = 30
+        [int]$MaxRetries = 16
     )
     $retryCount = 0; $isUp = $false
+
     do {
         try {
             $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 3
@@ -16,10 +17,13 @@ function Check-WebsiteStatus {
             $isUp = $false
         }
         $retryCount++
+        if (-not $isUp -and $retryCount -le $MaxRetries) {
+            Start-Sleep -Seconds 1
+        }
     } until ($isUp -or $retryCount -gt $MaxRetries)
 
     if (-not $isUp) {
-        Write-Host "网络无法使用，请检查网络稍后重试!"
+        Read-Host "网络无法使用，请检查网络稍后重试！（共尝试 $retryCount 次）"; exit
     }
 }
 
@@ -217,4 +221,4 @@ for ($i = 1; $i -le 4; $i++) {
     }
 }
 
-Write-Host "所有 IP 都无法访问，请稍后在再试！"
+Read-Host "所有 IP 都无法访问，请稍后在再试！"; exit
