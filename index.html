@@ -8,11 +8,9 @@ function Check-WebsiteStatus {
         [int]$MaxRetries = 16
     )
     $retryCount = 0; $isUp = $false
-
     do {
         try {
-            $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 3
-            $isUp = $response.StatusCode -eq 200
+            $isUp = (Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 3).StatusCode -eq 200
         } catch {
             $isUp = $false
         }
@@ -43,11 +41,9 @@ if ($NetID) {
             Check-WebsiteStatus
         }
     } else {
-        Write-Output "IPv4 配置中使用固定IP"
+        Write-Output "IPv4已使用固定IP"
     }
     chcp 936 > $null
-} else {
-    Write-Host "未找到有效互联网连接"
 }
 
 Check-WebsiteStatus
