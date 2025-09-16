@@ -91,6 +91,7 @@ function Get-BrowserPath {
                         Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "BackgroundModeEnabled" -Value 0 -EA 0
                         Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "StartupBoostEnabled" -Value 0 -EA 0
                         Start-Process -FilePath "gpupdate" -ArgumentList "/force" -NoNewWindow -Wait -EA 0
+                        Start $path -WindowStyle Hidden; Sleep 2; kill -Name "msedge" -Force -EA 0; Sleep 1
                     }
                 }
                 return $path
