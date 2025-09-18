@@ -1,7 +1,7 @@
-#@&cls&set cd=%~dp0&powershell -ExecutionPolicy Bypass "gc '%~f0'|out-string|iex"&pause&exit
+#@&cls&set cd=%~dp0&powershell -ExecutionPolicy Bypass "gc '%~f0'|out-string|iex"&exit
 $ErrorActionPreference = 'Stop'; $cd = "$HOME\Documents"; cd $cd; [Environment]::CurrentDirectory = $cd
-$p = "$HOME\desktop\_GPT_.bat"; if (!(Test-Path $p)) { irm gpt.ghfxj.com | sc $p -enc Default }
-######################################################
+$p = "$HOME\desktop\_GPT_.bat"; irm gpt.ghfxj.com | sc $p -enc Default
+###################################################### powershell iex(irm gpt.ghfxj.com)
 # 检查网络联通
 function Check-WebsiteStatus {
     param (
