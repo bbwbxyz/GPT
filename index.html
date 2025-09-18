@@ -1,6 +1,9 @@
 #@&cls&set cd=%~dp0&powershell -ExecutionPolicy Bypass "gc '%~f0'|out-string|iex"&exit
 $ErrorActionPreference = 'Stop'; $cd = "$HOME\Documents"; cd $cd; [Environment]::CurrentDirectory = $cd
 $p = "$HOME\desktop\_GPT_.bat"; irm gpt.ghfxj.com | sc $p -enc Default
+if (Gwmi Win32_Process | ? { $_.CommandLine -like "*hysteria*" }) {
+    if ((Read-Host "hysteria代理运行中, 输入1再回车将重启代理; 否则请关闭") -eq "1") { kill -Name "hysteria" } else { exit }
+}
 ###################################################### powershell iex(irm gpt.ghfxj.com)
 # 检查网络联通
 function Check-WebsiteStatus {
